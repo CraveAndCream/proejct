@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Successful</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="style.css">
+</head>
+
+<body>
+    <div class="container py-5">
+        <h1 class="text-center mb-4">Order Successful</h1>
+        <div id="order-details" class="text-center">
+            <!-- Order details will be dynamically added here -->
+        </div>
+        <div class="text-center mt-4">
+            <a href="index.html" class="btn btn-primary">Back to Home</a>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const orderDetailsContainer = document.getElementById("order-details");
+
+            // Retrieve order details from localStorage
+            const orderDetails = JSON.parse(localStorage.getItem("orderDetails"));
+
+            if (!orderDetails) {
+                orderDetailsContainer.innerHTML = "<p>No order details found.</p>";
+                return;
+            }
+
+            // Display order details
+            const cartItems = orderDetails.cart.map(item => `
+                <tr>
+                    <td><img src="${item.image}" alt="${item.name}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px;"></td>
+                    <td>${item.name}</td>
+                    <td>${item.quantity}</td>
+                    <td>Rp ${item.price.toLocaleString()}</td>
+                </tr>
+            `).join("");
+
+            orderDetailsContainer.innerHTML = `
+                <h2>Thank you, ${orderDetails.name}!</h2>
+                <p>Your order has been successfully placed.</p>
+                <h4>Order Summary</h4>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Image</th>
+                            <th>Product</th>
+                            <th>Quantity</th>
+                            <th>Price</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${cartItems}
+                    </tbody>
+                </table>
+                <p><strong>Total:</strong> ${orderDetails.total}</p>
+                <p><strong>Payment Method:</strong> ${orderDetails.paymentMethod}</p>
+                <p><strong>Notes:</strong> ${orderDetails.notes || "None"}</p>
+            `;
+
+            // Clear cart data from localStorage
+            localStorage.removeItem("cart");
+            localStorage.removeItem("orderDetails");
+        });
+    </script>
+</body>
+
+</html>

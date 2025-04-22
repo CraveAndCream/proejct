@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checkout</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="style.css">
+</head>
+
+<body>
+    <div class="container py-5">
+        <h1 class="text-center mb-4">Checkout</h1>
+        <div id="checkout-container">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Image</th> <!-- Added column for product image -->
+                        <th>Product</th>
+                        <th>Price</th>
+                        <th>Quantity</th>
+                        <th>Subtotal</th>
+                    </tr>
+                </thead>
+                <tbody id="checkout-items">
+                    <!-- Items will be dynamically added here -->
+                </tbody>
+            </table>
+            <div class="text-end">
+                <p><strong>Subtotal:</strong> <span id="checkout-subtotal">Rp 0</span></p>
+                <p><strong>Total:</strong> <span id="checkout-total">Rp 0</span></p>
+            </div>
+
+            <form id="checkout-form" class="mt-4" action="https://script.google.com/macros/s/AKfycbxG2rEGLzmEu3Z7mSXB5-gPoz0FyvVjhPxy9h3AsMs5_7VuZbBz6HVsLLj_XLFEgfRh/exec" method="POST" enctype="application/json">
+                <!-- Replace YOUR_WEB_APP_URL with your Google Apps Script Web App URL -->
+                <div class="mb-3">
+                    <label for="name" class="form-label">Name</label>
+                    <input type="text" id="name" name="name" class="form-control" placeholder="Enter your name" required>
+                </div>
+                <div class="mb-3">
+                    <label for="whatsapp" class="form-label">WhatsApp Number</label>
+                    <input type="text" id="whatsapp" name="whatsapp" class="form-control" placeholder="Enter your WhatsApp number" required>
+                </div>
+                <div class="mb-3">
+                    <label for="payment-method" class="form-label">Payment Method</label>
+                    <select id="payment-method" name="payment_method" class="form-select" required>
+                        <option value="" disabled selected>Select a payment method</option>
+                        <option value="cash">Bayar Cash ke Davin</option>
+                        <option value="bca">Pay with BCA (02393202)</option>
+                    </select>
+                </div>
+                <div class="mb-3" id="proof-of-payment-container" style="display: none;">
+                    <label for="proof-of-payment" class="form-label">Upload Bukti Pembayaran</label>
+                    <input type="file" id="proof-of-payment" name="proof_of_payment" class="form-control" accept="image/*">
+                </div>
+                <div class="mb-3">
+                    <label for="notes" class="form-label">Catatan</label>
+                    <textarea id="notes" name="notes" class="form-control" rows="3" placeholder="Tambahkan catatan (opsional)"></textarea>
+                </div>
+                <input type="hidden" id="cart-data" name="cart_data">
+                <div class="text-center mt-4">
+                    <button type="submit" class="btn btn-primary">Confirm and Pay</button>
+                    <a href="index.html" class="btn btn-secondary mt-2">Back to Home</a>
+                </div>
+            </form>
+            <div id="loading-spinner" style="display: none; text-align: center; margin-top: 20px;">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p>Submitting your order, please wait...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const checkoutItemsContainer = document.getElementById("checkout-items");
+            const checkoutSubtotal = document.getElementById("checkout-subtotal");
+            const checkoutTotal = document.getElementById("checkout-total");
+            const paymentMethodSelect = document.getElementById("payment-method");
+            const proofOfPaymentContainer = document.getElementById("proof-of-payment-container");
+
+            // Retrieve cart data from localStorage
+            const cart = JSON.parse(localStorage.getItem("cart")) || [];
+            document.getElementById("cart-data").value = JSON.stringify(cart);
+
+            if (cart.length === 0) {
+                alert("Your cart is empty. Redirecting to the homepage.");
+                window.location.href = "index.html";
+                return;
+            }
+
+            // Populate checkout table
+            let subtotal = 0;
+            cart.forEach(item => {
+                const subtotalItem = item.price * item.quantity;
+                subtotal += subtotalItem;
+
+                const row = document.createElement("tr");
+                row.innerHTML = `
+                    <td><img src="${item.image}" alt="${item.name}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px;"></td> <!-- Added image -->
+                    <td>${item.name}</td>
+                    <td>Rp ${item.price.toLocaleString()}</td>
+                    <td>${item.quantity}</td>
+                    <td>Rp ${subtotalItem.toLocaleString()}</td>
+                `;
+                checkoutItemsContainer.appendChild(row);
+            });
+
+            checkoutSubtotal.textContent = `Rp ${subtotal.toLocaleString()}`;
+            checkoutTotal.textContent = `Rp ${subtotal.toLocaleString()}`;
+
+            // Show proof of payment input if "Pay with BCA" is selected
+            paymentMethodSelect.addEventListener("change", function () {
+                if (this.value === "bca") {
+                    proofOfPaymentContainer.style.display = "block";
+                } else {
+                    proofOfPaymentContainer.style.display = "none";
+                }
+            });
+        });
+    </script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const checkoutForm = document.getElementById("checkout-form");
+            const loadingSpinner = document.getElementById("loading-spinner");
+
+            checkoutForm.addEventListener("submit", function (event) {
+                event.preventDefault(); // Prevent default form submission
+
+                // Show the loading spinner
+                loadingSpinner.style.display = "block";
+
+                const formData = new FormData(checkoutForm);
+                const data = Object.fromEntries(formData.entries());
+
+                fetch(checkoutForm.action, {
+                    method: "POST",
+                    body: new URLSearchParams(data), // Send data as URL-encoded form data
+                })
+                    .then((response) => response.json())
+                    .then((result) => {
+                        if (result.result === "success") {
+                            // Save order details to localStorage
+                            localStorage.setItem("orderDetails", JSON.stringify({
+                                name: data.name,
+                                whatsapp: data.whatsapp,
+                                paymentMethod: data.payment_method,
+                                notes: data.notes,
+                                cart: JSON.parse(localStorage.getItem("cart")),
+                                total: document.getElementById("checkout-total").textContent
+                            }));
+
+                            // Redirect to the order success page
+                            window.location.href = "order-success.html";
+                        } else {
+                            console.error("Error:", result.error);
+                            alert("Error: " + result.error);
+                        }
+                    })
+                    .catch((error) => {
+                        console.error("Error:", error);
+                        alert("An error occurred while submitting your order.");
+                    })
+                    .finally(() => {
+                        // Hide the loading spinner
+                        loadingSpinner.style.display = "none";
+                    });
+            });
+        });
+    </script>
+</body>
+
+</html>
