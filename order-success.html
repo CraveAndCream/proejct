@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Successful</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: "Poppins", sans-serif; /* Updated font */
+        }
+
+        h2, h3, p, table, button, a {
+            font-family: "Poppins", sans-serif; /* Updated font */
+        }
+
+        .container {
+            background-color: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            margin-top: 50px;
+        }
+
+        .table {
+            margin-bottom: 0;
+        }
+
+        .btn-primary {
+            background-color: #e73c13;
+            border-color: #e73c13;
+            transition: background-color 0.3s ease, transform 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            background-color: #be3b1a;
+            transform: scale(1.05);
+        }
+
+        .text-center a {
+            text-decoration: none;
+            color: #ffffff;
+        }
+
+        .text-center a:hover {
+            text-decoration: underline;
+        }
+
+        .thank-you-animation {
+            font-size: 3rem;
+            font-weight: bold;
+            color: #e73c13;
+            animation: fadeInScale 1s ease-in-out;
+        }
+
+        /* Add animation for the green checkmark with a badge-like background */
+        .checkmark-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 20px auto;
+        }
+
+        .checkmark-badge {
+            width: 100px;
+            height: 100px;
+            background-color: #4CAF50;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            animation: fadeInScale 1s ease-in-out;
+        }
+
+        .checkmark-icon {
+            width: 60px; /* Increase width for a longer checkmark */
+            height: 60px; /* Increase height for a longer checkmark */
+            stroke: #fff;
+            stroke-width: 4; /* Adjust stroke width for better visibility */
+            fill: none;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            stroke-dasharray: 120; /* Adjust dash array for longer checkmark */
+            stroke-dashoffset: 120;
+            animation: drawCheckmark 0.8s ease-in-out forwards 0.5s; /* Extend animation duration */
+        }
+
+        @keyframes fadeInScale {
+            0% {
+                opacity: 0;
+                transform: scale(0.8);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        @keyframes drawCheckmark {
+            to {
+                stroke-dashoffset: 0;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .table {
+                margin-left: -30px; /* Adjust the table slightly to the left for better alignment */
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header id="header">
+        <div class="container-fluid">
+            <div class="row justify-content-between align-items-center py-4">
+                <div class="col-auto">
+                    <a href="index.html" class="navbar-brand">
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+    <div class="container py-5">
+        <h2 class="text-center mb-4 thank-you-animation" style="color: black;">Thank you for your order!</h2>
+        <div class="checkmark-container">
+            <!-- Add green checkmark animation -->
+            <div class="checkmark-badge">
+                <svg class="checkmark-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                    <path d="M5 12l5 5L20 5" /> <!-- Adjust path for a longer checkmark -->
+                </svg>
+            </div>
+        </div>
+        <p class="text-center" style="color: black; font-size: 1.2rem;">Your Order has been sent</p>
+        <p class="text-center" id="order-datetime" style="color: black; font-size: 1rem;"></p> <!-- Add date and time display -->
+        <div class="row">
+            <!-- Order Receipt -->
+            <div class="col-md-6">
+                <h3 class="mb-3">Order Receipt</h3>
+                <table class="table table-bordered">
+                    <tbody id="order-receipt">
+                        <!-- Order receipt details will be dynamically added here -->
+                    </tbody>
+                </table>
+            </div>
+            <!-- Order Summary -->
+            <div class="col-md-6">
+                <h3 class="mb-3">Order Summary</h3>
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Product</th>
+                            <th>Quantity</th>
+                            <th>Price</th>
+                            <th>Subtotal</th>
+                        </tr>
+                    </thead>
+                    <tbody id="order-summary">
+                        <!-- Order summary details will be dynamically added here -->
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="3" class="text-end"><strong>Total:</strong></td>
+                            <td id="order-total"><strong>Rp 0</strong></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+        <div class="text-center mt-4">
+            <a href="index.html" class="btn btn-primary">Back to Home</a>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const myOrders = JSON.parse(localStorage.getItem("myOrders")) || [];
+            const lastOrder = myOrders[myOrders.length - 1]; // Get the most recent order
+
+            if (!lastOrder) {
+                alert("No order details found. Redirecting to the homepage.");
+                window.location.href = "index.html";
+                return;
+            }
+
+            // Populate order receipt
+            const orderReceiptContainer = document.getElementById("order-receipt");
+            orderReceiptContainer.innerHTML = `
+                <tr>
+                    <td><strong>Name:</strong></td>
+                    <td>${lastOrder.name}</td>
+                </tr>
+                <tr>
+                    <td><strong>Email:</strong></td>
+                    <td>${lastOrder.email}</td>
+                </tr>
+                <tr>
+                    <td><strong>WhatsApp:</strong></td>
+                    <td>${lastOrder.whatsapp}</td>
+                </tr>
+                <tr>
+                    <td><strong>Payment Method:</strong></td>
+                    <td>${lastOrder.paymentMethod}</td>
+                </tr>
+                <tr>
+                    <td><strong>Notes:</strong></td>
+                    <td>${lastOrder.notes || "None"}</td>
+                </tr>
+                <tr>
+                    <td><strong>Datetime:</strong></td>
+                    <td>${lastOrder.datetime || "Not provided"}</td> <!-- Ensure datetime is displayed -->
+                </tr>
+            `;
+
+            // Populate order summary
+            const orderSummaryContainer = document.getElementById("order-summary");
+            let total = 0;
+            lastOrder.cart.forEach(item => {
+                const subtotal = item.price * item.quantity;
+                total += subtotal;
+
+                const row = document.createElement("tr");
+                row.innerHTML = `
+                    <td>${item.name}</td>
+                    <td>${item.quantity}</td>
+                    <td>Rp ${item.price.toLocaleString()}</td>
+                    <td>Rp ${subtotal.toLocaleString()}</td>
+                `;
+                orderSummaryContainer.appendChild(row);
+            });
+
+            // Update total
+            document.getElementById("order-total").textContent = `Rp ${total.toLocaleString()}`;
+
+            // Display order date and time
+            const orderDatetimeElement = document.getElementById("order-datetime");
+
+        });
+    </script>
+</body>
+
+</html>
